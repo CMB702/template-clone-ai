@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  avatar    String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects Project[]
+  templates Template[]
+
+  @@index([email])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  imageUrl   String?
+  jsonData   Json?
+  elements   Element[]
+  exports    Export[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Element {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  type      String   // "text", "image", "shape", etc.
+  content   String?
+  style     Json     // colors, fonts, spacing, etc.
+  position  Json     // x, y coordinates
+  size      Json     // width, height
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+model Export {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  format    String   // "html", "react", "tailwind", "pdf", "png"
+  content   String
+  fileUrl   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  thumbnailUrl String?
+  jsonData     Json
+  isPublic     Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([category])
+}
+
+model AIAnalysis {
+  id        String   @id @default(cuid())
+  imagePath String
+  
+  colors        Json?
+  fonts         Json?
+  layout        Json?
+  components    Json?
+  extractedText String?
+
+  createdAt DateTime @default(now())
+
+  @@index([imagePath])
+}
